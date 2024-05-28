@@ -77,17 +77,22 @@ def reset():
 #- 각 row는 도서 ID를 기준으로 오름차순으로 출력한다
 
 def print_books():
-    cursor.execute("select * from books")
-    print("--------------------------------------------------------------------------------")
-    print(f"{"id".ljust(8)}{"title".ljust(16)}{"author".ljust(16)}{"avg.rating".ljust(16)}{"quantity".ljust(10)}")
-    print("--------------------------------------------------------------------------------")
-    print("--------------------------------------------------------------------------------")
+    print("-------------------------------------------------------------------------------------------------------------------")
+    print(f'{"id".ljust(8)}{"title".ljust(50)}{"author".ljust(30)}{"avg.rating".ljust(16)}{"quantity".ljust(10)}')
+    print("-------------------------------------------------------------------------------------------------------------------")
+    cursor.execute("select books.b_id as id, books.b_title as title, books.b_author as author, avg(b_u_rating) as avg_rating, 1-count(borrow.u_id) as quantity "
+                   "from books left join borrow on books.b_id = borrow.b_id left join ratings on books.b_id = ratings.b_id "
+                   "group by books.b_id order by books.b_id")
+    books = cursor.fetchall()
+    for book in books:
+        print(f"{str(book['id']).ljust(8)}{book['title'].ljust(50)}{book['author'].ljust(30)}{str(round(book['avg_rating'],1)).ljust(16)}{str(book['quantity']).ljust(10)}")
+    print("-------------------------------------------------------------------------------------------------------------------")
     
 def print_users():
     print("--------------------------------------------------------------------------------")
-    print(f"{"id".ljust(8)}{"name".ljust(16)}")
+    print(f'{"id".ljust(8)}{"name".ljust(16)}')
     print("--------------------------------------------------------------------------------")
-    cursor.execute("select * from users")
+    cursor.execute("select * from users order by u_id")
     users = cursor.fetchall()
     for user in users:
         print(f"{str(user['u_id']).ljust(8)}{user['u_name'].ljust(16)}")
@@ -96,9 +101,23 @@ def print_users():
 def insert_book():
     title = input('Book title: ')
     author = input('Book author: ')
-    # YOUR CODE GOES HERE
-    # print msg
+
+    if not 1<=len(title)<=50:
+        print("Title length should range from 1 to 50 characters")
+        return
+    
+    if not 1<=len(author)<=30:
+        print("Author length should range from 1 to 30 characters")
+        return 
+    
+    cursor.execute(f"select * from books where b_title = '{title}' and b_author = '{author}'")
+    book = cursor.fetchall()
+    if book:
+        print(f"Book ({title}, {author}) already exists")
+        return
+    
     cursor.execute(f"insert into books(b_title, b_author) values ('{title}','{author}')")
+    connection.commit()
 
 def remove_book():
     book_id = input('Book ID: ')
