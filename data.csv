@@ -5,7 +5,7 @@ b_id,b_title,b_author,u_id,u_name,b_u_rating
 2,The Hunger Games 2,Suzanne Collins,4,Sophia,3
 3,Harry Potter and the Deathly Hallows,J.K. Rowling,5,Emily,4
 3,Harry Potter and the Deathly Hallows,J.K. Rowling,6,Jacob,4
-4,Harry Potter and the Sorcerer¡¯s Stone,J.K. Rowling,7,Aria,4
+4,Harry Potter and the Sorcererï¿½ï¿½s Stone,J.K. Rowling,7,Aria,4
 5,Pride and Prejudice,Jane Austen,8,Elijah,1
 6,To Kill a Mockingbird,Harper Lee,9,Olivia,3
 6,To Kill a Mockingbird,Harper Lee,10,Harper,4
@@ -32,8 +32,8 @@ b_id,b_title,b_author,u_id,u_name,b_u_rating
 18,The Little Prince,Antoine,9,Olivia,4
 19,The Da Vinci Code,Dan Brown,21,Abigail,4
 20,Gladiator,Ridley Scott,24,Michael,5
-21,Alice¡¯s Adventures in Wonderland,Lewis Carroll,10,Harper,3
-21,Alice¡¯s Adventures in Wonderland,Lewis Carroll,25,Samuel,4
+21,Aliceï¿½ï¿½s Adventures in Wonderland,Lewis Carroll,10,Harper,3
+21,Aliceï¿½ï¿½s Adventures in Wonderland,Lewis Carroll,25,Samuel,4
 22,Crime and Punishment,Fyodor Dostoevsky,6,Jacob,4
 23,Divergent,Veronica Roth,24,Michael,4
 24,Memoirs of a Geisha,Arthur Golden,26,Layla,5
@@ -53,9 +53,9 @@ b_id,b_title,b_author,u_id,u_name,b_u_rating
 31,The Help,Kathryn Stockett,22,Mia,4
 31,The Help,Kathryn Stockett,9,Olivia,5
 32,Dracula,Bram Stoker,15,Ethan,3
-33,Ender¡¯s Game,Orson Scott Card,34,Henry,4
-33,Ender¡¯s Game,Orson Scott Card,28,Joseph,4
-34,Charlotte¡¯s Web,E.B. White,35,Emma,4
+33,Enderï¿½ï¿½s Game,Orson Scott Card,34,Henry,4
+33,Enderï¿½ï¿½s Game,Orson Scott Card,28,Joseph,4
+34,Charlotteï¿½ï¿½s Web,E.B. White,35,Emma,4
 35,Of Mice and Men,John Steinbeck,29,Scarlett,5
 35,Of Mice and Men,John Steinbeck,36,Luna,3
 36,Fahrenheit 451,Ray Bradbury,37,Jackson,4
@@ -63,9 +63,9 @@ b_id,b_title,b_author,u_id,u_name,b_u_rating
 37,The Catcher in the Rye,J.D. Salinger,38,Penelope,4
 38,Brave New World,Aldous Huxley,37,Jackson,5
 39,A Thousand Splendid Suns,Khaled Hosseini,23,Camila,3
-40,The Time Traveler¡¯s Wife,Audrey Niffenegger,7,Aria,4
-40,The Time Traveler¡¯s Wife,Audrey Niffenegger,33,Elizabeth,4
-40,The Time Traveler¡¯s Wife,Audrey Niffenegger,36,Luna,4
+40,The Time Travelerï¿½ï¿½s Wife,Audrey Niffenegger,7,Aria,4
+40,The Time Travelerï¿½ï¿½s Wife,Audrey Niffenegger,33,Elizabeth,4
+40,The Time Travelerï¿½ï¿½s Wife,Audrey Niffenegger,36,Luna,4
 41,The Princess Bride,William Goldman,7,Aria,5
 41,The Princess Bride,William Goldman,39,Hazel,3
 41,The Princess Bride,William Goldman,40,Mila,4
@@ -84,5 +84,5 @@ b_id,b_title,b_author,u_id,u_name,b_u_rating
 50,The Kite Runner,Khaled Hosseini,17,Noah,5
 51,The Giver,Lois Lowry,2,Mason,3
 52,The Lion King,Roger Allers,47,Aiden,4
-53,The Handmaid¡¯s Tale,Margaret Atwood,38,Penelope,4
-53,The Handmaid¡¯s Tale,Margaret Atwood,11,John,4
+53,The Handmaidï¿½ï¿½s Tale,Margaret Atwood,38,Penelope,4
+53,The Handmaidï¿½ï¿½s Tale,Margaret Atwood,11,John,4

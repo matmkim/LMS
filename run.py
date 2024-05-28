@@ -1,11 +1,12 @@
 from mysql.connector import connect
 import pandas
 
+# TABLE INFORMATION
 TABLES = {}
 TABEL_NAMES=['books','users','ratings','borrow']
 TABLES['books'] = (
     "create table `books` ("
-    "   `b_id` int,"
+    "   `b_id` int auto_increment,"
     "   `b_title` varchar(50) not null,"
     "   `b_author` varchar(30) not null,"
     "   primary key(`b_id`)"
@@ -13,8 +14,8 @@ TABLES['books'] = (
 )
 TABLES['users'] = (
     "create table `users` ("
-    "   `u_id` int,"
-    "   `u_name` varchar(30) not null,"
+    "   `u_id` int auto_increment,"
+    "   `u_name` varchar(10) not null,"
     "   primary key(`u_id`)"
     ")"
 )
@@ -43,11 +44,13 @@ def initialize_database():
     # YOUR CODE GOES HERE
     # print msg
     csvFile = pandas.read_csv('data.csv',encoding='latin1')
-    for table in TABEL_NAMES:
-        try:
-            cursor.execute(TABLES[table])
-        except:
+    try:
+        for table in TABEL_NAMES:
+                cursor.execute(TABLES[table])
+    except:
+        for table in reversed(TABEL_NAMES):
             cursor.execute(f"delete from {table}")
+        
     connection.commit()
 
     row_list = csvFile.values.tolist()
@@ -59,57 +62,72 @@ def initialize_database():
     connection.commit()
 
     print('Database successfully initialized')
-    pass
+
 
 def reset():
     # YOUR CODE GOES HERE
     pass
 
-def print_books():
-    # YOUR CODE GOES HERE
-    # print msg
-    cursor.execute("select * from books")
-    print(cursor.fetchall())
+#데이터베이스에 존재하는 모든 도서의 정보를 출력한다.
+#- 각 column은 도서 ID, 도서명, 저자명, 평균 평점, 대출가능 권 수 순으로 출력한다.
+#- [참고1-평균평점규칙]
+#도서의 평균 평점은 해당 도서에 남겨진 평점들의 산술평균이다.
+#한 회원이 같은 도서에 평점을 여러 번 남기는 경우에는, 가장 최근의 평점 1건만 계산에 반영된다.
+#도서에 대한 평점이 존재하지 않는다면 'None' 을 출력한다.
+#- 각 row는 도서 ID를 기준으로 오름차순으로 출력한다
 
+def print_books():
+    cursor.execute("select * from books")
+    print("--------------------------------------------------------------------------------")
+    print(f"{"id".ljust(8)}{"title".ljust(16)}{"author".ljust(16)}{"avg.rating".ljust(16)}{"quantity".ljust(10)}")
+    print("--------------------------------------------------------------------------------")
+    print("--------------------------------------------------------------------------------")
+    
 def print_users():
-    # YOUR CODE GOES HERE
-    # print msg
+    print("--------------------------------------------------------------------------------")
+    print(f"{"id".ljust(8)}{"name".ljust(16)}")
+    print("--------------------------------------------------------------------------------")
     cursor.execute("select * from users")
-    print(cursor.fetchall())
+    users = cursor.fetchall()
+    for user in users:
+        print(f"{str(user['u_id']).ljust(8)}{user['u_name'].ljust(16)}")
+    print("--------------------------------------------------------------------------------")
 
 def insert_book():
     title = input('Book title: ')
     author = input('Book author: ')
     # YOUR CODE GOES HERE
     # print msg
-    cursor.execute("select max(b_id) as max from books")
-    x = cursor.fetchall()[0]['max']
-    cursor.execute(f"insert into books values ({x+1},'{title}','{author}')")
+    cursor.execute(f"insert into books(b_title, b_author) values ('{title}','{author}')")
 
 def remove_book():
     book_id = input('Book ID: ')
     # YOUR CODE GOES HERE
     # print msg
-    pass
+    cursor.execute(f"delete from books where b_id = {book_id}")
+    connection.commit()
 
 def insert_user():
     name = input('User name: ')
     # YOUR CODE GOES HERE
     # print msg
-    pass
+    cursor.execute("select max(u_id) as max from users")
+    x = cursor.fetchall()[0]['max']
+    cursor.execute(f"insert into users values ({x+1},'{name}')")
 
 def remove_user():
     user_id = input('User ID: ')
     # YOUR CODE GOES HERE
     # print msg
-    pass
+    cursor.execute(f"delete from users where u_id = {user_id}")
+    connection.commit()
 
 def checkout_book():
     book_id = input('Book ID: ')
     user_id = input('User ID: ')
     # YOUR CODE GOES HERE
     # print msg
-    pass
+    cursor.execute(f"insert into borrow values ({book_id},{user_id})")
 
 def return_and_rate_book():
     book_id = input('book ID: ')
@@ -117,7 +135,9 @@ def return_and_rate_book():
     rating = input('Ratings (1~5): ')
     # YOUR CODE GOES HERE
     # print msg
-    pass
+    cursor.execute(f"delete from borrow where b_id = {book_id} and u_id = {user_id}")
+    cursor.execute(f"insert into ratings values ({book_id},{user_id},{rating})")
+    connection.commit()
 
 def print_users_for_book():
     user_id = input('User ID: ')
@@ -149,6 +169,15 @@ def recommend_item_based():
     # print msg
     pass
 
+def drop():
+    for table in reversed(TABEL_NAMES):
+        cursor.execute(f"drop table {table}")
+
+def master():
+    query = input()
+    cursor.execute(query)
+    print(cursor.fetchall())
+
 
 def main():
     global connection 
@@ -162,10 +191,6 @@ def main():
     )   
     global cursor
     with connection.cursor(dictionary=True) as cursor:
-        cursor.execute("show tables")
-        result = cursor.fetchall()
-        print(result)
-
         while True:
             print('============================================================')
             print('1. initialize database')
@@ -217,7 +242,10 @@ def main():
                 break
             elif menu == 15:
                 reset()
+            elif menu == 16:
+                master()
             else:
+                drop()
                 print('Invalid action')
         
         connection.close()
