@@ -25,8 +25,8 @@ TABLES['ratings'] = (
     "   `u_id` int,"
     "   `b_u_rating` int not null,"
     "   primary key(`b_id`,`u_id`),"
-    "   foreign key(`b_id`) references `books`(`b_id`),"
-    "   foreign key(`u_id`) references `users`(`u_id`),"
+    "   foreign key(`b_id`) references `books`(`b_id`) on delete cascade,"
+    "   foreign key(`u_id`) references `users`(`u_id`) on delete cascade,"
     "   check(`b_u_rating` in (1,2,3,4,5))"
     ")"
 )
@@ -35,8 +35,8 @@ TABLES['borrow'] = (
     "   `b_id` int,"
     "   `u_id` int,"
     "   primary key(`b_id`,`u_id`),"
-    "   foreign key(`b_id`) references `books`(`b_id`),"
-    "   foreign key(`u_id`) references `users`(`u_id`)"
+    "   foreign key(`b_id`) references `books`(`b_id`) on delete cascade,"
+    "   foreign key(`u_id`) references `users`(`u_id`) on delete cascade"
     ")"
 )
 
@@ -48,7 +48,7 @@ def initialize_database():
         for table in TABEL_NAMES:
                 cursor.execute(TABLES[table])
     except:
-        for table in reversed(TABEL_NAMES):
+        for table in TABEL_NAMES:
             cursor.execute(f"delete from {table}")
         
     connection.commit()
@@ -85,7 +85,7 @@ def print_books():
                    "group by books.b_id order by books.b_id")
     books = cursor.fetchall()
     for book in books:
-        print(f"{str(book['id']).ljust(8)}{book['title'].ljust(50)}{book['author'].ljust(30)}{str(round(book['avg_rating'],1)).ljust(16)}{str(book['quantity']).ljust(10)}")
+        print(f"{str(book['id']).ljust(8)}{book['title'].ljust(50)}{book['author'].ljust(30)}{str(None if book['avg_rating'] is None else round(book['avg_rating'],1)).ljust(16)}{str(book['quantity']).ljust(10)}")
     print("-------------------------------------------------------------------------------------------------------------------")
     
 def print_users():
@@ -118,6 +118,7 @@ def insert_book():
     
     cursor.execute(f"insert into books(b_title, b_author) values ('{title}','{author}')")
     connection.commit()
+    print("One book successfully inserted")
 
 def remove_book():
     book_id = input('Book ID: ')
@@ -128,11 +129,14 @@ def remove_book():
 
 def insert_user():
     name = input('User name: ')
-    # YOUR CODE GOES HERE
-    # print msg
-    cursor.execute("select max(u_id) as max from users")
-    x = cursor.fetchall()[0]['max']
-    cursor.execute(f"insert into users values ({x+1},'{name}')")
+
+    if not 1<=len(name)<=10:
+        print("Username length should range from 1 to 10 characters")
+        return
+    
+    cursor.execute(f"insert into users(u_name) values ('{name}')")
+    connection.commit()
+    print("One user successfully inserted")
 
 def remove_user():
     user_id = input('User ID: ')
