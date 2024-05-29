@@ -80,9 +80,10 @@ def print_books():
     print("-------------------------------------------------------------------------------------------------------------------")
     print(f'{"id".ljust(8)}{"title".ljust(50)}{"author".ljust(30)}{"avg.rating".ljust(16)}{"quantity".ljust(10)}')
     print("-------------------------------------------------------------------------------------------------------------------")
-    cursor.execute("select books.b_id as id, books.b_title as title, books.b_author as author, avg(b_u_rating) as avg_rating, 1-count(borrow.u_id) as quantity "
-                   "from books left join borrow on books.b_id = borrow.b_id left join ratings on books.b_id = ratings.b_id "
-                   "group by books.b_id order by books.b_id")
+    cursor.execute("select T.id as id, title, author, avg(b_u_rating) as avg_rating, quantity "
+                   "from (select books.b_id as id, books.b_title as title, books.b_author as author, 1-count(borrow.u_id) as quantity from books left join borrow on books.b_id = borrow.b_id group by books.b_id) as T "
+                   "left join ratings on T.id = ratings.b_id "
+                   "group by T.id order by T.id")
     books = cursor.fetchall()
     for book in books:
         print(f"{str(book['id']).ljust(8)}{book['title'].ljust(50)}{book['author'].ljust(30)}{str(None if book['avg_rating'] is None else round(book['avg_rating'],1)).ljust(16)}{str(book['quantity']).ljust(10)}")
@@ -165,19 +166,72 @@ def remove_user():
 def checkout_book():
     book_id = input('Book ID: ')
     user_id = input('User ID: ')
-    # YOUR CODE GOES HERE
-    # print msg
+    
+    cursor.execute(f"select * from books where b_id = {book_id}")
+    book_exist = cursor.fetchall()
+    if not book_exist:
+        print(f"Book {book_id} does not exist")
+        return
+    
+    cursor.execute(f"select * from users where u_id = {user_id}")
+    user_exist = cursor.fetchall()
+    if not user_exist:
+        print(f"User {user_id} does not exist")
+        return
+    
+    cursor.execute(f"select * from borrow where b_id ={book_id}")
+    borrow = cursor.fetchall()
+    if borrow:
+        print("Cannot check out a book that is currently borrowed")
+        return
+    
+    cursor.execute(f"select count(*) as cnt from borrow where u_id = {user_id}")
+    borrow_count = cursor.fetchall()
+    if borrow_count[0]['cnt']>=2:
+        print(f"User {user_id} exceeded the maximum borrowing limit")
+        return
+
     cursor.execute(f"insert into borrow values ({book_id},{user_id})")
+    connection.commit()
+    print("Book successfully checked out")
 
 def return_and_rate_book():
-    book_id = input('book ID: ')
+    book_id = input('Book ID: ')
     user_id = input('User ID: ')
-    rating = input('Ratings (1~5): ')
-    # YOUR CODE GOES HERE
-    # print msg
+    rating = int(input('Ratings (1~5): '))
+    
+    cursor.execute(f"select * from books where b_id = {book_id}")
+    book_exist = cursor.fetchall()
+    if not book_exist:
+        print(f"Book {book_id} does not exist")
+        return
+    
+    cursor.execute(f"select * from users where u_id = {user_id}")
+    user_exist = cursor.fetchall()
+    if not user_exist:
+        print(f"User {user_id} does not exist")
+        return
+
+    if rating not in [1,2,3,4,5]:
+        print("Rating should range from 1 to 5")
+        return
+    
+    cursor.execute(f"select * from borrow where b_id = {book_id} and u_id = {user_id}")
+    borrow = cursor.fetchall()
+    if not borrow:
+        print("Cannot return and rate a book that is not currently borrowed for this user")
+        return
+
     cursor.execute(f"delete from borrow where b_id = {book_id} and u_id = {user_id}")
-    cursor.execute(f"insert into ratings values ({book_id},{user_id},{rating})")
+
+    cursor.execute(f"select * from ratings where b_id = {book_id} and u_id = {user_id}")
+    rating_exist = cursor.fetchall()
+    if rating_exist:
+        cursor.execute(f"update ratings set b_u_rating = {rating} where b_id = {book_id} and u_id = {user_id}")
+    else:
+        cursor.execute(f"insert into ratings values ({book_id},{user_id},{rating})")
     connection.commit()
+    print("Book successfully returned and rated")
 
 def print_users_for_book():
     user_id = input('User ID: ')
