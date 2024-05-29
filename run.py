@@ -122,14 +122,22 @@ def insert_book():
 
 def remove_book():
     book_id = input('Book ID: ')
-    # YOUR CODE GOES HERE
-    # print msg
+    cursor.execute(f"select * from books where b_id = {book_id}")
+    exist = cursor.fetchall()
+    if not exist:
+        print(f"Book {book_id} does not exist")
+        return
+    cursor.execute(f"select * from borrow where b_id = {book_id}")
+    borrow = cursor.fetchall()
+    if borrow:
+        print("Cannot delete a book that is currently borrowed")
+        return 
     cursor.execute(f"delete from books where b_id = {book_id}")
     connection.commit()
+    print("One book successfully removed")
 
 def insert_user():
     name = input('User name: ')
-
     if not 1<=len(name)<=10:
         print("Username length should range from 1 to 10 characters")
         return
@@ -140,10 +148,19 @@ def insert_user():
 
 def remove_user():
     user_id = input('User ID: ')
-    # YOUR CODE GOES HERE
-    # print msg
+    cursor.execute(f"select * from users where u_id = {user_id}")
+    exist = cursor.fetchall()
+    if not exist:
+        print(f"User {user_id} does not exist")
+        return
+    cursor.execute(f"select * from borrow where u_id = {user_id}")
+    borrow = cursor.fetchall()
+    if borrow:
+        print("Cannot delete a user with borrowed books")
+        return 
     cursor.execute(f"delete from users where u_id = {user_id}")
     connection.commit()
+    print("One user successfully removed")
 
 def checkout_book():
     book_id = input('Book ID: ')
