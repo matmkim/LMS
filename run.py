@@ -43,7 +43,7 @@ TABLES['borrow'] = (
 def initialize_database():
     # YOUR CODE GOES HERE
     # print msg
-    csvFile = pandas.read_csv('data.csv',encoding='latin1')
+    csvFile = pandas.read_csv('data.csv',encoding='latin1')  # encoding issue
     try:
         for table in TABEL_NAMES:
                 cursor.execute(TABLES[table])
@@ -67,14 +67,6 @@ def initialize_database():
 def reset():
     # YOUR CODE GOES HERE
     pass
-
-#데이터베이스에 존재하는 모든 도서의 정보를 출력한다.
-#- 각 column은 도서 ID, 도서명, 저자명, 평균 평점, 대출가능 권 수 순으로 출력한다.
-#- [참고1-평균평점규칙]
-#도서의 평균 평점은 해당 도서에 남겨진 평점들의 산술평균이다.
-#한 회원이 같은 도서에 평점을 여러 번 남기는 경우에는, 가장 최근의 평점 1건만 계산에 반영된다.
-#도서에 대한 평점이 존재하지 않는다면 'None' 을 출력한다.
-#- 각 row는 도서 ID를 기준으로 오름차순으로 출력한다
 
 def print_books():
     print("-------------------------------------------------------------------------------------------------------------------")
@@ -235,14 +227,35 @@ def return_and_rate_book():
 
 def print_users_for_book():
     user_id = input('User ID: ')
-    # YOUR CODE GOES HERE
-    # print msg
+
+    cursor.execute(f"select * from users where u_id = {user_id}")
+    user_exist = cursor.fetchall()
+    if not user_exist:
+        print(f"User {user_id} does not exist")
+        return
+
     pass
 
 def print_borrowing_status_for_user():
     user_id = input('User ID: ')
-    # YOUR CODE GOES HERE
-    # print msg
+
+    cursor.execute(f"select * from users where u_id = {user_id}")
+    user_exist = cursor.fetchall()
+    if not user_exist:
+        print(f"User {user_id} does not exist")
+        return
+    
+    cursor.execute(f"select books.b_id as id, books.b_title as title, books.b_author as author, avg(b_u_rating) as rating from books left join borrow on books.b_id = borrow.b_id "
+                   f"left join ratings on books.b_id = ratings.b_id where borrow.u_id = {user_id} group by books.b_id order by books.b_id")
+    borrow = cursor.fetchall()
+
+    print("-------------------------------------------------------------------------------------------------------------------")
+    print(f'{"id".ljust(8)}{"title".ljust(50)}{"author".ljust(30)}{"avg.rating".ljust(16)}')
+    print("-------------------------------------------------------------------------------------------------------------------")
+    for book in borrow:
+        print(f"{str(book['id']).ljust(8)}{book['title'].ljust(50)}{book['author'].ljust(30)}{str(None if book['rating'] is None else round(book['rating'],1)).ljust(16)}")
+    print("-------------------------------------------------------------------------------------------------------------------")
+
     pass
 
 def search_books():
