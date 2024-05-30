@@ -256,12 +256,22 @@ def print_borrowing_status_for_user():
         print(f"{str(book['id']).ljust(8)}{book['title'].ljust(50)}{book['author'].ljust(30)}{str(None if book['rating'] is None else round(book['rating'],1)).ljust(16)}")
     print("-------------------------------------------------------------------------------------------------------------------")
 
-    pass
 
 def search_books():
     query = input('Query: ')
-    # YOUR CODE GOES HERE
-    # print msg
+   
+    print("-------------------------------------------------------------------------------------------------------------------")
+    print(f'{"id".ljust(8)}{"title".ljust(50)}{"author".ljust(30)}{"avg.rating".ljust(16)}{"quantity".ljust(10)}')
+    print("-------------------------------------------------------------------------------------------------------------------")
+    cursor.execute("select T.id as id, title, author, avg(b_u_rating) as avg_rating, quantity "
+                   "from (select books.b_id as id, books.b_title as title, books.b_author as author, 1-count(borrow.u_id) as quantity from books left join borrow on books.b_id = borrow.b_id group by books.b_id) as T "
+                   "left join ratings on T.id = ratings.b_id "
+                   f"where lower(T.title) like lower('%{query}%') "
+                   "group by T.id order by T.id")
+    books = cursor.fetchall()
+    for book in books:
+        print(f"{str(book['id']).ljust(8)}{book['title'].ljust(50)}{book['author'].ljust(30)}{str(None if book['avg_rating'] is None else round(book['avg_rating'],1)).ljust(16)}{str(book['quantity']).ljust(10)}")
+    print("-------------------------------------------------------------------------------------------------------------------")
 
 def recommend_popularity():
     # YOUR CODE GOES HERE
