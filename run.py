@@ -1,5 +1,5 @@
 from mysql.connector import connect
-import pandas
+import pandas as pd
 
 # TABLE INFORMATION
 TABLES = {}
@@ -43,7 +43,7 @@ TABLES['borrow'] = (
 def initialize_database():
     # YOUR CODE GOES HERE
     # print msg
-    csvFile = pandas.read_csv('data.csv',encoding='latin1')  # encoding issue
+    csvFile = pd.read_csv('data.csv',encoding='latin1')  # encoding issue
     try:
         for table in TABEL_NAMES:
                 cursor.execute(TABLES[table])
@@ -65,14 +65,24 @@ def initialize_database():
 
 
 def reset():
-    # YOUR CODE GOES HERE
-    pass
+    reset = input("Reset?(y/n): ")
+    if reset == "y":
+        try:
+            for table in reversed(TABEL_NAMES):
+                cursor.execute(f"delete from {table}")
+                cursor.execute(f"drop table {table}")
+        except:
+            pass
+    else:
+        return
+    
+    initialize_database()
 
 def print_books():
     print("-------------------------------------------------------------------------------------------------------------------")
     print(f'{"id".ljust(8)}{"title".ljust(50)}{"author".ljust(30)}{"avg.rating".ljust(16)}{"quantity".ljust(10)}')
     print("-------------------------------------------------------------------------------------------------------------------")
-    cursor.execute("select T.id as id, title, author, avg(b_u_rating) as avg_rating, quantity "
+    cursor.execute("select T.id as id, title, author, avg(b_u_rating) as av4g_rating, quantity "
                    "from (select books.b_id as id, books.b_title as title, books.b_author as author, 1-count(borrow.u_id) as quantity from books left join borrow on books.b_id = borrow.b_id group by books.b_id) as T "
                    "left join ratings on T.id = ratings.b_id "
                    "group by T.id order by T.id")
@@ -256,7 +266,6 @@ def print_borrowing_status_for_user():
         print(f"{str(book['id']).ljust(8)}{book['title'].ljust(50)}{book['author'].ljust(30)}{str(None if book['rating'] is None else round(book['rating'],1)).ljust(16)}")
     print("-------------------------------------------------------------------------------------------------------------------")
 
-
 def search_books():
     query = input('Query: ')
    
@@ -274,17 +283,108 @@ def search_books():
     print("-------------------------------------------------------------------------------------------------------------------")
 
 def recommend_popularity():
-    # YOUR CODE GOES HERE
     user_id = input('User ID: ')
-    # YOUR CODE GOES HERE
-    # print msg
-    pass
+    cursor.execute(f"select * from users where u_id = {user_id}")
+    user_exist = cursor.fetchall()
+    if not user_exist:
+        print(f"User {user_id} does not exist")
+
+        return
+    print("-------------------------------------------------------------------------------------------------------------------")
+    print("Rating-based")
+    print("-------------------------------------------------------------------------------------------------------------------")
+    print(f'{"id".ljust(8)}{"title".ljust(50)}{"author".ljust(30)}{"avg.rating".ljust(16)}')
+    print("-------------------------------------------------------------------------------------------------------------------")
+    cursor.execute("select books.b_id as id, books.b_title as title, books.b_author as author, S.avg as avg "
+                   f"from (select T.b_id as id, avg(b_u_rating) as avg, count(*) as cnt from (select books.b_id as b_id from books left join (select * from ratings where u_id = {user_id}) as ratings "
+                   "on books.b_id = ratings.b_id where ratings.b_id is null) as T left join ratings on T.b_id = ratings.b_id "
+                   f"group by T.b_id order by T.b_id) as S join books on books.b_id = S.id order by avg, books.b_id")
+    books = cursor.fetchall()
+    print(f"{str(books[0]['id']).ljust(8)}{books[0]['title'].ljust(50)}{books[0]['author'].ljust(30)}{str(None if books[0]['avg'] is None else round(books[0]['avg'],1)).ljust(16)}")
+    print("-------------------------------------------------------------------------------------------------------------------")
+    print("Popularity-based")
+    print("-------------------------------------------------------------------------------------------------------------------")
+    print(f'{"id".ljust(8)}{"title".ljust(50)}{"author".ljust(30)}{"avg.rating".ljust(16)}')
+    print("-------------------------------------------------------------------------------------------------------------------")
+    cursor.execute(f"select books.b_id as id, books.b_title as title, books.b_author as author, S.avg as avg, S.cnt as cnt "
+                   f"from (select T.b_id as id, avg(b_u_rating) as avg, count(*) as cnt from (select books.b_id as b_id from books left join (select * from ratings where u_id = {user_id}) as ratings "
+                   "on books.b_id = ratings.b_id where ratings.b_id is null) as T left join ratings on T.b_id = ratings.b_id "
+                   f"group by T.b_id order by T.b_id) as S join books on books.b_id = S.id order by cnt, books.b_id")
+    books = cursor.fetchall()
+    print(f"{str(books[0]['id']).ljust(8)}{books[0]['title'].ljust(50)}{books[0]['author'].ljust(30)}{str(None if books[0]['avg'] is None else round(books[0]['avg'],1)).ljust(16)}{str(books[0]['cnt']).ljust(10)}")
+    print("-------------------------------------------------------------------------------------------------------------------")
 
 def recommend_item_based():
     user_id = input('User ID: ')
-    # YOUR CODE GOES HERE
-    # print msg
-    pass
+    cursor.execute(f"select * from users where u_id = {user_id}")
+    user_exist = cursor.fetchall()
+    if not user_exist:
+        print(f"User {user_id} does not exist")
+        return
+    cursor.execute(f"select * from ratings")
+    ratings = cursor.fetchall()
+
+    cursor.execute(f"select u_id from users")
+    users = [user['u_id'] for user in cursor.fetchall()]
+
+    cursor.execute(f"select b_id from books")
+    books = [book['b_id'] for book in cursor.fetchall()]
+
+    raw_matrix = pd.DataFrame(index=users, columns=books)
+    matrix = pd.DataFrame(index=users, columns=books)
+    raw_matrix = matrix.astype(float)
+    matrix = matrix.astype(float)
+
+
+    for row in ratings:
+        raw_matrix.at[row['u_id'], row['b_id']] = row['b_u_rating']
+
+    def fill_nan(row):
+        if row.isna().all():
+            return row.fillna(0)
+        else:
+            return row.fillna(row.mean())
+
+    matrix = raw_matrix.apply(fill_nan, axis=1)
+
+
+    def cosine_similarity(row1, row2):
+        dot_product = (row1 * row2).sum()
+        norm_row1 = (row1**2).sum()**0.5
+        norm_row2 = (row2**2).sum()**0.5
+        if norm_row1 == 0 or norm_row2 == 0:
+            return 0
+        else:
+            return dot_product / (norm_row1 * norm_row2)
+
+    similarity_matrix = pd.DataFrame(index=users, columns=users)
+
+    for i in users:
+        for j in users:
+            similarity_matrix.at[i, j] = cosine_similarity(matrix.loc[i], matrix.loc[j])
+
+    user_id = int(user_id)
+    user_ratings = raw_matrix.loc[user_id]
+    other_users = matrix.index[matrix.index != user_id]
+    predictions = {}
+    
+    for book_id in matrix.columns:
+        if pd.isna(user_ratings[book_id]):
+            numerator = 0
+            denominator = 0
+            for other_user in other_users:
+                if not pd.isna(matrix.at[other_user, book_id]):
+                    similarity = similarity_matrix.at[user_id, other_user]
+                    rating = matrix.at[other_user, book_id]
+                    numerator += similarity * rating
+                    denominator += similarity
+            if denominator != 0:
+                predictions[book_id] = numerator / denominator
+            else:
+                predictions[book_id] = 0
+    
+    sorted_books = sorted(predictions.items(), key=lambda x: (-x[1], x[0]))
+    print(sorted_books)
 
 def drop():
     for table in reversed(TABEL_NAMES):
