@@ -74,6 +74,8 @@ def reset():
                 cursor.execute(f"drop table {table}")
         except:
             pass
+        for table in TABEL_NAMES:
+            cursor.execute(TABLES[table])
     else:
         return
     connection.commit()
@@ -488,7 +490,6 @@ def main():
                 else:
                     print('Invalid action')
             except: print('Invalid action')
-        
         connection.close()
 
 if __name__ == "__main__":
